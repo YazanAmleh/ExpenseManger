@@ -13,15 +13,14 @@ public class DataSource {
     private static final ArrayList<Data> expenseDataArrayList = new ArrayList<>();
 
     public DataSource() {
-        incomeDataArrayList.add(new Data(200, "friend", "a friend who owe to me ", "2", "11-3-2022"));
-        incomeDataArrayList.add(new Data(432, "recipe", "helllo", "3", "12-2-2022"));
-        incomeDataArrayList.add(new Data(3124, "Main Job ", "salary", "4", "11-5-2022"));
-        incomeDataArrayList.add(new Data(123, "Tip", "from kind person", "5", "11-21-2022"));
+        incomeDataArrayList.add(new Data(200, "friend", "a friend who was owe to me ", "1", "2022-3-11"));
+        incomeDataArrayList.add(new Data(432, "secondary job", "secondary job", "2", "2022-12-2"));
+        incomeDataArrayList.add(new Data(3124, "Main Job ", "Main Job", "3", "2022-12-3"));
+        incomeDataArrayList.add(new Data(123, "Tip", "from kind person", "4", "2022-12-11"));
 
-        expenseDataArrayList.add(new Data(200, "friend", "a friend who owe to me ", "2", "11-3-2022"));
-        expenseDataArrayList.add(new Data(432, "recipe", "helllo", "3", "12-2-2022"));
-        expenseDataArrayList.add(new Data(3124, "Main Job ", "salary", "4", "11-5-2022"));
-        expenseDataArrayList.add(new Data(123, "Tip", "from kind person", "5", "11-21-2022"));
+        expenseDataArrayList.add(new Data(70, "bills", "electricity, water ", "1", "2022-11-1"));
+        expenseDataArrayList.add(new Data(100, "new shoes", "Nike shoes", "2", "2022-11-2"));
+        expenseDataArrayList.add(new Data(159, "new T-shirt ", "puma T-shirt", "3", "2022-11-3"));
 
     }
 
@@ -78,7 +77,7 @@ public class DataSource {
 
     public static int getTotalIncomes() {
         int totalIncomes = 0;
-        for (Data data : expenseDataArrayList) {
+        for (Data data : incomeDataArrayList) {
             totalIncomes += data.getAmount();
         }
         return totalIncomes;

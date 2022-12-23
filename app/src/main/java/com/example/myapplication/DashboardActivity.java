@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -17,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,6 +28,7 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.myapplication.Model.Data;
 import com.example.myapplication.Model.DataSource;
 import com.github.mikephil.charting.charts.BarChart;
@@ -36,7 +40,10 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class DashboardActivity extends AppCompatActivity {
 
@@ -78,8 +85,12 @@ public class DashboardActivity extends AppCompatActivity {
         expenseAdapter.submitList(DataSource.getExpenseDataArrayList());
         expenseAdapter.notifyDataSetChanged();
 
-        barChart.invalidate();
 
+        buildChartBars();
+
+        totalBalanceResult.setText(String.valueOf(DataSource.getBalance()));
+        totalExpenseResult.setText(DataSource.getTotalExpenses() + "");
+        totalIncomeResult.setText(DataSource.getTotalIncomes() + "");
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -114,23 +125,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         barChart = findViewById(R.id.bar_chart);
 
-        getBarEntries();
-        barDataSet = new BarDataSet(barEntries, "Expenses");
-        barData = new BarData(barDataSet);
-        barChart.setData(barData);
-        barChart.getDescription().setText("Expenses Per Day");
-        XAxis xval = barChart.getXAxis();
-        xval.setDrawLabels(true);
-        xval.setValueFormatter(new IndexAxisValueFormatter(date));
-        barDataSet.setColors(ColorTemplate.MATERIAL_COLORS);
-        barDataSet.setValueTextColor(Color.BLACK);
-        barDataSet.setValueTextSize(16f);
-        barChart.zoomIn();
-        barChart.setClickable(false);
-        barChart.setScaleEnabled(false);
-        barDataSet.notifyDataSetChanged();
-        barChart.notifyDataSetChanged();
-        barChart.invalidate();
+        buildChartBars();
 
 
         totalBalanceResult.setText(String.valueOf(DataSource.getBalance()));
@@ -174,9 +169,14 @@ public class DashboardActivity extends AppCompatActivity {
 
         });
 
+
+        initToolbar();
+        initDrawer();
+        initReyclerViews();
+    }
+
+    private void initReyclerViews() {
         LinearLayoutManager layoutManagerIncome = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        layoutManagerIncome.setStackFromEnd(true);
-        layoutManagerIncome.setReverseLayout(true);
         mRecyclerIncome.setHasFixedSize(true);
         mRecyclerIncome.setLayoutManager(layoutManagerIncome);
         incomeAdapter = new IncomeExpenseDataAdapter(false);
@@ -185,16 +185,33 @@ public class DashboardActivity extends AppCompatActivity {
 
 
         LinearLayoutManager layoutManagerExpense = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        layoutManagerExpense.setStackFromEnd(true);
-        layoutManagerExpense.setReverseLayout(true);
         mRecyclerExpense.setHasFixedSize(true);
         mRecyclerExpense.setLayoutManager(layoutManagerExpense);
         expenseAdapter = new IncomeExpenseDataAdapter(false);
         mRecyclerExpense.setAdapter(expenseAdapter);
         expenseAdapter.submitList(DataSource.getExpenseDataArrayList());
+    }
 
-        initToolbar();
-        initDrawer();
+    private void buildChartBars() {
+        getBarEntries();
+        barDataSet = new BarDataSet(barEntries, "Expenses");
+        barData = new BarData(barDataSet);
+        barChart.setData(barData);
+        barChart.getDescription().setText("Expenses Per Day");
+        XAxis xval = barChart.getXAxis();
+        xval.setDrawLabels(true);
+        xval.setValueFormatter(new IndexAxisValueFormatter(date));
+        barDataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+        barDataSet.setValueTextColor(Color.BLACK);
+        barDataSet.setValueTextSize(16f);
+        barChart.zoomIn();
+        barChart.setScrollContainer(true);
+        barChart.setClickable(false);
+        barChart.setScaleEnabled(false);
+        barDataSet.notifyDataSetChanged();
+        barChart.notifyDataSetChanged();
+        barChart.invalidate();
+
     }
 
     private void initToolbar() {
@@ -238,7 +255,8 @@ public class DashboardActivity extends AppCompatActivity {
         switch (itemId) {
 
             case R.id.dashboard:
-                onBackPressed();
+                DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+                drawerLayout.closeDrawer(GravityCompat.START);
                 break;
 
             case R.id.income:
@@ -282,7 +300,12 @@ public class DashboardActivity extends AppCompatActivity {
     private void openCalculator() {
         Intent intent = new Intent();
         intent.setClassName("com.android.calculator2", "com.android.calculator2.Calculator");
-        startActivity(intent);
+        try {
+
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "there's no calculators installed ", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void getBarEntries() {
@@ -339,9 +362,6 @@ public class DashboardActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 incomeDataInsert();
-                incomeAdapter.submitList(DataSource.getExpenseDataArrayList());
-                incomeAdapter.notifyDataSetChanged();
-                barChart.invalidate();
             }
         });
 
@@ -388,8 +408,15 @@ public class DashboardActivity extends AppCompatActivity {
                 return;
             }
             try {
-                DataSource.addExpenseData(new Data(Integer.parseInt(amount), type, note, System.currentTimeMillis() + "", DataSource.getCurrentData()));
+                DataSource.addIncomeData(new Data(Integer.parseInt(amount), type, note, System.currentTimeMillis() + "", DataSource.getCurrentData()));
                 ftAnimation();
+                incomeAdapter.submitList(DataSource.getIncomeDataArrayList());
+                incomeAdapter.notifyDataSetChanged();
+
+                totalBalanceResult.setText(String.valueOf(DataSource.getBalance()));
+                totalExpenseResult.setText(DataSource.getTotalExpenses() + "");
+                totalIncomeResult.setText(DataSource.getTotalIncomes() + "");
+
                 dialog.dismiss();
 
             } catch (NumberFormatException e) {
@@ -404,27 +431,6 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
         dialog.show();
-    }
-
-    public void notifyChart() {
-        getBarEntries();
-        barDataSet = new BarDataSet(barEntries, "Expenses");
-        barData = new BarData(barDataSet);
-        barChart.setData(barData);
-        barChart.getDescription().setText("Expenses Per Day");
-        XAxis xval = barChart.getXAxis();
-        xval.setDrawLabels(true);
-        xval.setValueFormatter(new IndexAxisValueFormatter(date));
-        barDataSet.setColors(ColorTemplate.MATERIAL_COLORS);
-        barDataSet.setValueTextColor(Color.BLACK);
-        barDataSet.setValueTextSize(16f);
-        barChart.setScrollContainer(true);
-        barChart.setScaleEnabled(false);
-        barChart.setClickable(false);
-        barDataSet.notifyDataSetChanged();
-        barChart.notifyDataSetChanged();
-        barChart.invalidate();
-
     }
 
     public void expenseDataInsert() {
@@ -467,7 +473,10 @@ public class DashboardActivity extends AppCompatActivity {
                 ftAnimation();
                 expenseAdapter.submitList(DataSource.getExpenseDataArrayList());
                 expenseAdapter.notifyDataSetChanged();
-                notifyChart();
+                totalBalanceResult.setText(String.valueOf(DataSource.getBalance()));
+                totalExpenseResult.setText(DataSource.getTotalExpenses() + "");
+                totalIncomeResult.setText(DataSource.getTotalIncomes() + "");
+                buildChartBars();
                 dialog.dismiss();
 
 
@@ -482,8 +491,6 @@ public class DashboardActivity extends AppCompatActivity {
         });
         dialog.show();
     }
-
-
 }
 
 

@@ -10,7 +10,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+public class SplashActivity extends AppCompatActivity {
     ImageView imageView;
     TextView textView1, textView2;
 
@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
         new Handler().postDelayed(new Runnable() {
             public void run() {
-                Intent intent = new Intent(MainActivity.this, DashboardActivity.class);
+                Intent intent = new Intent(SplashActivity.this, DashboardActivity.class);
                 startActivity(intent);
                 finish();
             }
